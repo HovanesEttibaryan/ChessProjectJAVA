@@ -1,11 +1,3 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -22,6 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import java.awt.*;
 
 
 public class Board extends JPanel implements ActionListener, MouseListener {
@@ -250,72 +243,132 @@ public class Board extends JPanel implements ActionListener, MouseListener {
     }
 
 
-  private void createPopup() {
-    int buttonWidth = 200;
-    int buttonHeight = 100;
-
-    int hoverWidth = 230;
-    int hoverHeight = 115;
-
+private void createPopup() {
+    //Create the popup window and set its basics properties
     JFrame popupFrame = new JFrame("Chess");
     popupFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    popupFrame.setSize(500, 350);
-    popupFrame.setLocationRelativeTo(null);
+    popupFrame.setSize(600,450);
+    popupFrame.setLocationRelativeTo(null); // Centers the window on the screen
+    popupFrame.setResizable(false); // Keeps the popup size fixed
 
+    //Create the main penel that will hold the title and button
     JPanel popupPanel = new JPanel();
+
+    //Stack everything vertically with the title above button
     popupPanel.setLayout(new BoxLayout(popupPanel, BoxLayout.Y_AXIS));
+
+    //Set the background of the popup
     popupPanel.setBackground(Color.decode("#3e3d32"));
 
-    ImageIcon defaultIcon = new ImageIcon("play_button2.png");
-    ImageIcon hoverIcon = new ImageIcon("play_button2_hover.png");
+    //Create title text
+    JLabel titleLabel = new JLabel("Chess");
+    titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center horizontally
+    titleLabel.setForeground(Color.WHITE); //Text color
+    titleLabel.setFont(new Font("Serif", Font.BOLD, 42)); // Font style and size
 
-    Image resizedDefaultImage = defaultIcon.getImage()
-            .getScaledInstance(buttonWidth, buttonHeight, Image.SCALE_SMOOTH);
+    //Create  JButton with rounded corners.
+    JButton startButton = new JButton("PLAY"){
+        @Override
+        protected void paintComponent(Graphics g){
+            //Graphics@D gives smoother and better drawing tools
+            Graphics2D g2 = (Graphics2D) g.create();
 
-    Image resizedHoverImage = hoverIcon.getImage()
-            .getScaledInstance(hoverWidth, hoverHeight, Image.SCALE_SMOOTH);
+            //Makes rounded corners look smooth
+            g2.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+            );
 
-    ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImage);
-    ImageIcon resizedHoverIcon = new ImageIcon(resizedHoverImage);
+            //Use button's current background color
+            g2.setColor(getBackground());
 
-    JButton startButton = new JButton(resizedDefaultIcon);
+            //Draws the rounded rectangle that acts as the button background
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
 
+            //Let JButton draw the text "PLAY" on top of background
+            super.paintComponent(g);
+            g2.dispose();
+        }
+    };
+
+    //Center the button horizontally
     startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-    startButton.setBorderPainted(false);
+
+    //Set the button's normal size
+    startButton.setPreferredSize(new Dimension(200, 70));
+    startButton.setMaximumSize(new Dimension(200, 70));
+
+    //Style the button text
+    startButton.setFont(new Font("Arial", Font.BOLD, 24));
+    startButton.setForeground(Color.decode("#2b2b2b"));
+
+    //Set the normal button color
+    startButton.setBackground(Color.decode("#d9a441"));
+
+    //Remove the default Swing button Styling so our custom rounded style shows clearly
     startButton.setFocusPainted(false);
+    startButton.setBorderPainted(false);
     startButton.setContentAreaFilled(false);
-
-    startButton.setPreferredSize(new Dimension(hoverWidth, hoverHeight));
-    startButton.setMaximumSize(new Dimension(hoverWidth, hoverHeight));
-
-    startButton.addMouseListener(new MouseAdapter() {
+    startButton.setOpaque(false);
+    
+    //Add hover effects for the button
+    startButton.addMouseListener(new MouseAdapter(){
         @Override
-        public void mouseEntered(MouseEvent e) {
-            startButton.setIcon(resizedHoverIcon);
+        public void mouseEntered(MouseEvent e){
+            //Make the button brighter when mouse is over it
+            startButton.setBackground(Color.decode("#f0bd55"));
+
+            //Slightly enlarge button when hovered
+            startButton.setPreferredSize(new Dimension(220, 80));
+            startButton.setMaximumSize(new Dimension(220, 80));
+
+            //Update layout and  redraw the button after changine size and color
+            popupPanel.revalidate();
+            startButton.repaint();
         }
 
         @Override
-        public void mouseExited(MouseEvent e) {
-            startButton.setIcon(resizedDefaultIcon);
+        public void mouseExited(MouseEvent e){
+            //Return button to normal color
+            startButton.setBackground(Color.decode("#d9a441"));
+
+            //Return the button to its normal size
+            startButton.setPreferredSize(new Dimension(200, 70));
+            startButton.setMaximumSize(new Dimension(200, 70));
+
+            //Update the layout and redraw button
+            popupPanel.revalidate();
+            startButton.repaint();
         }
     });
 
-    startButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            popupFrame.dispose();
-            showChessBoard();
-        }
+    //When button is clicked close the popup and show the chess board
+    startButton.addActionListener(e ->{
+        popupFrame.dispose();
+        showChessBoard();
     });
 
+    //Add flexible space above the title so that the content is vertically centered
     popupPanel.add(Box.createVerticalGlue());
+
+    //Add title to panel
+    popupPanel.add(titleLabel);
+
+    //Add fixed space between title and button
+    popupPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+
+    //Add play button to panel
     popupPanel.add(startButton);
+
+    //Add space below button to keep everything centered
     popupPanel.add(Box.createVerticalGlue());
 
+    //Put panel inside popup window
     popupFrame.add(popupPanel);
+
+    //Show the popup window
     popupFrame.setVisible(true);
 }
-
 
 
     ImageIcon getScaledImageIcon(ImageIcon icon, int width, int height) {

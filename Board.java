@@ -726,7 +726,12 @@ private void createPopup() {
         	        // Selected piece is a king
         	        King kingInstance = (King) selectedPiece;
 
-        	        if (TakeTurns() && kingInstance.isValidMove(selectedRow, selectedCol, row, col, boardCells, moveHistory) || (kingInstance.KingSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory) || kingInstance.QueenSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory))) {
+                    
+        	    if (TakeTurns() && (
+        kingInstance.isValidMove(selectedRow, selectedCol, row, col, boardCells, moveHistory)
+        || kingInstance.KingSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory)
+        || kingInstance.QueenSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory)
+)) {
         	        	        	        	
         	        	if(kingInstance.KingSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory)) {
         	        		System.out.println("King Side Castle");
@@ -737,7 +742,7 @@ private void createPopup() {
     	                    System.out.println(moveCount);
     	                    moveHistory.add(move);
     	                    
-    	                 
+    	                
         	        	}
         	        	
         	        	else if(kingInstance.QueenSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory)) {
@@ -754,6 +759,7 @@ private void createPopup() {
 	        	        	// Move the king to the new location
 	        	        	MovePiece(row, col);
 		        	        highlightCell(row, col);
+                            kingInstance.setHasMoved();
         	            
 		        	        if (!CorrectCheckResponse()) {
 	        	            	System.out.println("Incorrect move after check");
@@ -781,7 +787,7 @@ private void createPopup() {
 	            	            	Winner();
 	            	        	}
 	        	            	
-	        	            	 Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
+	        	            	Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
 
 	         	                moveCount++;
 	         	                System.out.println(moveCount);
@@ -1038,8 +1044,6 @@ private void createPopup() {
     }
 
 
-    
-    
     boolean ifCheckMate() {
         boolean ismate = true;
         String currentPlayerColor;

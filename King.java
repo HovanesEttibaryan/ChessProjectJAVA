@@ -42,6 +42,7 @@ public class King extends Pieces {
     }
 
     // Check if a move is valid for the King piece
+    /*
     protected boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, BoardCell[][] boardCells,
             List<Move> moveHistory) {
 
@@ -73,6 +74,84 @@ public class King extends Pieces {
         }
 
         return validMove;
+    }
+    */
+/* 
+@Override
+protected boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol,
+        BoardCell[][] boardCells, List<Move> moveHistory) {
+
+    // Prevent checking outside the board
+    if (toRow < 0 || toRow >= boardCells.length || toCol < 0 || toCol >= boardCells[0].length) {
+        return false;
+    }
+
+    int rowDifference = Math.abs(toRow - fromRow);
+    int colDifference = Math.abs(toCol - fromCol);
+
+    // A normal king move is one square in any direction
+    boolean normalKingMove =
+            rowDifference <= 1 &&
+            colDifference <= 1 &&
+            !(rowDifference == 0 && colDifference == 0);
+
+    // Castling is a special king move where the king moves two columns
+    boolean castleMove =
+            KingSideCastle(fromRow, fromCol, toRow, toCol, boardCells, moveHistory)
+            || QueenSideCastle(fromRow, fromCol, toRow, toCol, boardCells, moveHistory);
+
+    boolean validMove = normalKingMove || castleMove;
+
+    // If the destination has one of our own pieces, the move is not valid
+    if (boardCells[toRow][toCol].hasPiece()
+            && boardCells[toRow][toCol].getColor().equals(color)) {
+        return false;
+    }
+
+    // Kings should not move onto another king
+    if (boardCells[toRow][toCol].hasPiece()
+            && boardCells[toRow][toCol].getPiece() instanceof King) {
+        return false;
+    }
+
+    return validMove;
+}
+*/
+@Override
+protected boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol,
+        BoardCell[][] boardCells, List<Move> moveHistory) {
+
+    if (toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8) {
+        return false;
+    }
+
+    int rowDifference = Math.abs(toRow - fromRow);
+    int colDifference = Math.abs(toCol - fromCol);
+
+    boolean normalKingMove =
+            rowDifference <= 1 &&
+            colDifference <= 1 &&
+            !(rowDifference == 0 && colDifference == 0);
+
+    if (!normalKingMove) {
+        return false;
+    }
+
+    if (boardCells[toRow][toCol].hasPiece()
+            && boardCells[toRow][toCol].getColor().equals(color)) {
+        return false;
+    }
+
+    if (boardCells[toRow][toCol].hasPiece()
+            && boardCells[toRow][toCol].getPiece() instanceof King) {
+        return false;
+    }
+
+    return true;
+}
+
+    public void setHasMoved() {
+    hasMoved = true;
     }
 
     // Check if the path from source to destination is clear
@@ -155,43 +234,71 @@ public class King extends Pieces {
         return safe;
     }
 
-    // Check if kingside castling is possible
-    protected boolean KingSideCastle(int fromRow, int fromCol, int toRow, int toCol, BoardCell[][] boardCells,
-            List<Move> moveHistory) {
-        boolean kingside = false;
+    protected boolean KingSideCastle(int fromRow, int fromCol, int toRow, int toCol,
+        BoardCell[][] boardCells, List<Move> moveHistory) {
 
-        if (color.equals("white") && hasMoved == false && !boardCells[7][6].hasPiece() && !boardCells[7][5].hasPiece()
-                && toRow == 7 && toCol == 6 && safeToCastleKing(fromRow, fromCol, boardCells, moveHistory)) {
-            kingside = true;
+        if (hasMoved) {
+            return false;
         }
 
-        if (color.equals("black") && hasMoved == false && !boardCells[0][6].hasPiece() && !boardCells[0][5].hasPiece()
-                && toRow == 0 && toCol == 6 && safeToCastleKing(fromRow, fromCol, boardCells, moveHistory)) {
-            kingside = true;
+        if (color.equals("white")) {
+            return fromRow == 7 && fromCol == 4 &&
+                toRow == 7 && toCol == 6 &&
+                boardCells[7][7].hasPiece() &&
+                boardCells[7][7].getPiece() instanceof Rook &&
+                boardCells[7][7].getColor().equals("white") &&
+                !boardCells[7][5].hasPiece() &&
+                !boardCells[7][6].hasPiece() &&
+                safeToCastleKing(fromRow, fromCol, boardCells, moveHistory);
         }
 
-        return kingside;
+        if (color.equals("black")) {
+            return fromRow == 0 && fromCol == 4 &&
+                toRow == 0 && toCol == 6 &&
+                boardCells[0][7].hasPiece() &&
+                boardCells[0][7].getPiece() instanceof Rook &&
+                boardCells[0][7].getColor().equals("black") &&
+                !boardCells[0][5].hasPiece() &&
+                !boardCells[0][6].hasPiece() &&
+                safeToCastleKing(fromRow, fromCol, boardCells, moveHistory);
+        }
+
+        return false;
     }
 
-    // Check if queenside castling is possible
-    protected boolean QueenSideCastle(int fromRow, int fromCol, int toRow, int toCol, BoardCell[][] boardCells,
-            List<Move> moveHistory) {
-        boolean queenside = false;
+    protected boolean QueenSideCastle(int fromRow, int fromCol, int toRow, int toCol,
+        BoardCell[][] boardCells, List<Move> moveHistory) {
 
-        if (color.equals("white") && hasMoved == false && !boardCells[7][1].hasPiece() && !boardCells[7][2].hasPiece()
-                && !boardCells[7][3].hasPiece() && toRow == 7 && toCol == 2
-                && safeToCastleQueen(fromRow, fromCol, boardCells, moveHistory)) {
-            queenside = true;
+        if (hasMoved) {
+            return false;
         }
 
-        if (color.equals("black") && hasMoved == false && !boardCells[0][1].hasPiece() && !boardCells[0][2].hasPiece()
-                && !boardCells[0][3].hasPiece() && toRow == 0 && toCol == 2
-                && safeToCastleQueen(fromRow, fromCol, boardCells, moveHistory)) {
-            queenside = true;
+        if (color.equals("white")) {
+            return fromRow == 7 && fromCol == 4 &&
+                toRow == 7 && toCol == 2 &&
+                boardCells[7][0].hasPiece() &&
+                boardCells[7][0].getPiece() instanceof Rook &&
+                boardCells[7][0].getColor().equals("white") &&
+                !boardCells[7][1].hasPiece() &&
+                !boardCells[7][2].hasPiece() &&
+                !boardCells[7][3].hasPiece() &&
+                safeToCastleQueen(fromRow, fromCol, boardCells, moveHistory);
         }
 
-        return queenside;
-    }
+        if (color.equals("black")) {
+            return fromRow == 0 && fromCol == 4 &&
+                toRow == 0 && toCol == 2 &&
+                boardCells[0][0].hasPiece() &&
+                boardCells[0][0].getPiece() instanceof Rook &&
+                boardCells[0][0].getColor().equals("black") &&
+                !boardCells[0][1].hasPiece() &&
+                !boardCells[0][2].hasPiece() &&
+                !boardCells[0][3].hasPiece() &&
+                safeToCastleQueen(fromRow, fromCol, boardCells, moveHistory);
+        }
+
+        return false;
+        }
 
     // Check if the King has valid moves on the board
     protected boolean hasValidMoves(BoardCell[][] boardCells, List<Move> moveHistory) {

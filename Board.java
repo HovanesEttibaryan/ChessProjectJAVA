@@ -1,3 +1,4 @@
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -14,7 +15,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import java.awt.*;
 
 
 public class Board extends JPanel implements ActionListener, MouseListener {
@@ -397,15 +397,22 @@ private void createPopup() {
         JPanel eastPanel = createRegionPanelWithLargerWidth(); // Adjusted width
         JPanel westPanel = createRegionPanel();
 
-        // Add Instruction button to the east panel
-        JButton instructionButton = new JButton("Instructions");
-        instructionButton.setPreferredSize(new Dimension(200, 75)); // Set button size
+        //Create button size for all buttons
+        Dimension buttonSize = new Dimension(200,75);
+
+        //Create the Instructions button that opens the intructions popup
+        JButton instructionButton = new RoundedButton("Instructions");
+        instructionButton.setPreferredSize(buttonSize); // Set button size
+        instructionButton.setMaximumSize(buttonSize);
+        instructionButton.setMinimumSize(buttonSize);
+        
+        //Center button inside the vertical button pane;
+        instructionButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Style the button
         instructionButton.setBackground(Color.decode("#769656")); // Set button background color
         instructionButton.setForeground(Color.WHITE); // Set button text color
-
-        // Set the font size for the button's text
-        Font buttonFont = instructionButton.getFont();
-        instructionButton.setFont(new Font(buttonFont.getName(), Font.PLAIN, 25)); // Adjust the font size
+        instructionButton.setFont(new Font("Arial", Font.PLAIN, 25)); // Adjust the font size
 
         instructionButton.addActionListener(new ActionListener() {
             @Override
@@ -413,11 +420,53 @@ private void createPopup() {
                 showInstructionPopup();
             }
         });
+        
 
-        // Create a panel for the button and set its layout to BorderLayout
-        JPanel buttonPanel = new JPanel(new BorderLayout());
-        buttonPanel.add(instructionButton, BorderLayout.EAST); // Add button to the right of the panel
-        eastPanel.add(buttonPanel, BorderLayout.EAST); // Add button panel to the east panel
+        //Create exit button
+        JButton exitButton = new RoundedButton("Exit");
+        exitButton.setPreferredSize(buttonSize); //Set button size
+        exitButton.setMaximumSize(buttonSize);
+        exitButton.setMinimumSize(buttonSize);
+
+        // Center the button inside the vertical panel
+        exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        //Style the buttons
+        exitButton.setBackground(Color.decode("#769656")); //Set button background color
+        exitButton.setForeground(Color.WHITE); //Set button text color
+        exitButton.setFont(new Font("Arial", Font.PLAIN, 25)); // Adjust the font size
+
+        //When Exit button is clicked, close the entire program
+        exitButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                System.exit(0);
+            }
+        });
+
+
+        //BUTTON PANEL
+        //Create a separate panel to hold buttons
+        JPanel buttonPanel = new JPanel();
+
+        //Stack the buttons vertically
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+
+        //Match the button panel background with the side panel background
+        buttonPanel.setBackground(Color.decode("#3e3d32"));
+
+        //Add Intructions button to the top
+        buttonPanel.add(instructionButton);
+
+        //Add vertical spacing between buttons
+        buttonPanel.add(Box.createRigidArea(new Dimension(0,20)));
+
+        //Add the exit button below the Instructions button
+        buttonPanel.add(exitButton);
+
+        //Add button panel to the right side of east panel
+        eastPanel.add(buttonPanel, BorderLayout.EAST);
+
 
      // Create a JLabel for the text in the south panel
         JLabel southLabel = new JLabel("a          b          c           d          e          f          g          h                                                    ");
@@ -1544,6 +1593,51 @@ private void createPopup() {
         }
     }
 
+    // Custom button class that draws a rounded rectangle instead of the default square JButton
+    class RoundedButton extends JButton{
+        public RoundedButton(String text){
+        super(text);
+
+        //Stops swing from drawing the default rectangular button bg
+        setContentAreaFilled(false);
+
+        //Removes the default border around button
+        setBorderPainted(false);
+
+        //Removes the blue/gray focus outline after clicking
+        setFocusPainted(false);
+
+        //Make button bg transparent so rounded shape shows
+        setOpaque(false);
+
+        setMargin(new Insets(0, 0, 0, 0));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g){
+            //Create a Graphics2D copy to draw smoother shapes
+            Graphics2D g2 = (Graphics2D) g.create();
+
+            //Smooths out rounded corners
+            g2.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+            );
+            
+            //Use button's backgroud color
+            g2.setColor(getBackground());
+
+            //Draw the rounded button bg
+            g2.fillRoundRect(0,0,getWidth(), getHeight(), 25, 25);
+
+            //Draw button text on top of rounded bg
+            super.paintComponent(g);
+
+            //Dispose of the Graphics2D copy
+            g2.dispose();
+
+        }
+    }
     
     int getCount() {
     	return moveCount;

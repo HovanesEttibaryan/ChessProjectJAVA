@@ -15,6 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 
 public class Board extends JPanel implements ActionListener, MouseListener {
@@ -207,7 +208,7 @@ public class Board extends JPanel implements ActionListener, MouseListener {
         ImageIcon black_king_icon = black_king.getPieceIcon();
         boardCells[0][4].button.setIcon(black_king_icon); 
         boardCells[0][4].setPiece(black_king);
-        	
+        
         //Create black bishops
         Bishop black_bishop1 = new Bishop("black");
         ImageIcon black_bishop1_icon = black_bishop1.getPieceIcon();
@@ -238,7 +239,7 @@ public class Board extends JPanel implements ActionListener, MouseListener {
         
         // Add the mouse listener to the panel
         addMouseListener(this);
-       
+    
         createPopup();
     }
 
@@ -406,7 +407,7 @@ private void createPopup() {
         instructionButton.setMaximumSize(buttonSize);
         instructionButton.setMinimumSize(buttonSize);
         
-        //Center button inside the vertical button pane;
+        //Center button inside the vertical button panel
         instructionButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Style the button
@@ -421,6 +422,34 @@ private void createPopup() {
             }
         });
         
+
+        //Create New game button
+        JButton newGameButton = new RoundedButton("New Game");
+        newGameButton.setPreferredSize(buttonSize); // Set button size
+        newGameButton.setMaximumSize(buttonSize);
+        newGameButton.setMinimumSize(buttonSize);
+
+        //Center button inside the vertical button panel
+        newGameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Style the button
+        newGameButton.setBackground(Color.decode("#769656")); // Set button background color
+        newGameButton.setForeground(Color.WHITE); // Set button text color
+        newGameButton.setFont(new Font("Arial", Font.PLAIN, 25)); // Adjust the font size
+
+        //When New Game is clicked, restart the program
+        newGameButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(Board.this);
+                currentFrame.dispose();
+
+                moveHistory.clear();
+
+                new Board();
+            }
+        });
+
 
         //Create exit button
         JButton exitButton = new RoundedButton("Exit");
@@ -459,6 +488,12 @@ private void createPopup() {
         buttonPanel.add(instructionButton);
 
         //Add vertical spacing between buttons
+        buttonPanel.add(Box.createRigidArea(new Dimension(0,20)));
+
+        //Add New Game button in the middle
+        buttonPanel.add(newGameButton);
+
+        //Add vertical spacing between New Game and Exit
         buttonPanel.add(Box.createRigidArea(new Dimension(0,20)));
 
         //Add the exit button below the Instructions button

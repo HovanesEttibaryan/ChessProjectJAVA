@@ -36,6 +36,29 @@ public class Board extends JPanel implements ActionListener, MouseListener {
     static List<Move> hiddenchecks = new ArrayList<>();
     static boolean check_mate = false;
 
+
+
+    //Chess Clock Variables
+    //Timer object that updates once every second
+    private javax.swing.Timer chessTimer;
+
+    //Time remaining for each player, measured in seconds
+    private int whiteTimeLeft = 300;
+    private int blackTimeLeft = 300;
+
+    //Increment added after each move, measured in seconds
+    private int increment = 0;
+
+    //Tracks whose clock is currently running
+    private String activeClockColor = "white";
+
+    //Timer does not start until white makes the first legal move
+    private boolean clockStarted = false;
+
+    //Labels that display the remaining time
+    private JLabel whiteTimerLabel;
+    private JLabel blackTimerLabel;
+
     public Board() {
         // Set the layout of the panel to a grid with 8 rows and 8 columns
         this.setLayout(new GridLayout(8, 8));
@@ -386,6 +409,8 @@ private void createPopup() {
         // Create a JPanel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
 
+        // Keep the chess board large even after adding side panels
+        this.setPreferredSize(new Dimension(720, 720));
         // Add your Board to the center of the BorderLayout
         mainPanel.add(this, BorderLayout.CENTER);
 
@@ -396,7 +421,66 @@ private void createPopup() {
         JPanel northPanel = createRegionPanel();
         JPanel southPanel = createRegionPanel();
         JPanel eastPanel = createRegionPanelWithLargerWidth(); // Adjusted width
+        eastPanel.setLayout(new BorderLayout()); // Use BorderLayout so we can control where timers and buttons go
         JPanel westPanel = createRegionPanel();
+
+        //Timer Labels
+        //Create labels to show each player's remaining time
+        whiteTimerLabel = new JLabel("White: " + formatTime(whiteTimeLeft));
+        blackTimerLabel = new JLabel("Black: " + formatTime(blackTimeLeft));
+
+        //Style the timer labels
+        whiteTimerLabel.setForeground(Color.WHITE);
+        blackTimerLabel.setForeground(Color.WHITE);
+
+        whiteTimerLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        blackTimerLabel.setFont(new Font("Arial", Font.BOLD, 24));
+
+        // Clock Column
+        // This panel sits directly to the right of the chess board
+        JPanel clockColumn = new JPanel(new BorderLayout());
+
+        // Match the background color of the side area
+        clockColumn.setBackground(Color.decode("#3e3d32"));
+
+        // Give the clock column a fixed width
+        clockColumn.setPreferredSize(new Dimension(160, 720));
+
+
+        // Black Timer Panel
+        // Panel for black's timer near the top-right of the board
+        JPanel blackTimerPanel = new JPanel(new BorderLayout());
+        blackTimerPanel.setBackground(Color.decode("#3e3d32"));
+
+        // Style black timer
+        blackTimerLabel.setHorizontalAlignment(JLabel.CENTER);
+        blackTimerLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        blackTimerLabel.setForeground(Color.WHITE);
+
+        // Add black timer to its panel
+        blackTimerPanel.add(blackTimerLabel, BorderLayout.CENTER);
+
+
+        // White Timer Panel
+        // Panel for white's timer near the bottom-right of the board
+        JPanel whiteTimerPanel = new JPanel(new BorderLayout());
+        whiteTimerPanel.setBackground(Color.decode("#3e3d32"));
+
+        // Style white timer
+        whiteTimerLabel.setHorizontalAlignment(JLabel.CENTER);
+        whiteTimerLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        whiteTimerLabel.setForeground(Color.WHITE);
+
+        // Add white timer to its panel
+        whiteTimerPanel.add(whiteTimerLabel, BorderLayout.CENTER);
+
+        // Add Timers to Clock Column
+        // Put black timer at the top
+        clockColumn.add(blackTimerPanel, BorderLayout.NORTH);
+
+        // Put white timer at the bottom
+        clockColumn.add(whiteTimerPanel, BorderLayout.SOUTH);
+
 
         //Create button size for all buttons
         Dimension buttonSize = new Dimension(200,75);
@@ -450,6 +534,29 @@ private void createPopup() {
             }
         });
 
+        //Timer Button
+        //Create Clock Button
+        JButton clockButton = new RoundedButton("Clock");
+        clockButton.setPreferredSize(buttonSize);
+        clockButton.setMaximumSize(buttonSize);
+        clockButton.setMinimumSize(buttonSize);
+
+        //Center the button inside the vertical Panel
+        clockButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        //Style the button
+        clockButton.setBackground(Color.decode("#769656")); //Set button background color
+        clockButton.setForeground(Color.WHITE); //set button text color
+        clockButton.setFont(new Font("Arial", Font.PLAIN, 25)); //adjust font size
+
+        //When clicjed, open the time control popup
+        clockButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                showClockpopup();
+            }
+        });
+
 
         //Create exit button
         JButton exitButton = new RoundedButton("Exit");
@@ -493,17 +600,44 @@ private void createPopup() {
         //Add New Game button in the middle
         buttonPanel.add(newGameButton);
 
-        //Add vertical spacing between New Game and Exit
+        //Add vertical spacing between New Game and Clock
+        buttonPanel.add(Box.createRigidArea(new Dimension(0,20)));
+
+        //Add Clock button
+        buttonPanel.add(clockButton);
+
         buttonPanel.add(Box.createRigidArea(new Dimension(0,20)));
 
         //Add the exit button below the Instructions button
         buttonPanel.add(exitButton);
 
-        //Add button panel to the right side of east panel
-        eastPanel.add(buttonPanel, BorderLayout.EAST);
+        // Button Column
+        // This panel holds the buttons farther to the right
+        JPanel buttonColumn = new JPanel();
 
+        // Stack the buttons vertically
+        buttonColumn.setLayout(new BoxLayout(buttonColumn, BoxLayout.Y_AXIS));
 
-     // Create a JLabel for the text in the south panel
+        // Match the background
+        buttonColumn.setBackground(Color.decode("#3e3d32"));
+
+        // Give the button column some space
+        buttonColumn.setPreferredSize(new Dimension(230, 720));
+
+        // Add some space at the top so buttons are not glued to the very top
+        buttonColumn.add(Box.createRigidArea(new Dimension(0, 80)));
+
+        // Add the actual button panel
+        buttonColumn.add(buttonPanel);
+
+        // Add Clock and Buttons to East Panel
+        // Clock column goes closest to the board
+        eastPanel.add(clockColumn, BorderLayout.WEST);
+
+        // Buttons go farther to the right
+        eastPanel.add(buttonColumn, BorderLayout.EAST);
+        
+        // Create a JLabel for the text in the south panel
         JLabel southLabel = new JLabel("a          b          c           d          e          f          g          h                                                    ");
         southLabel.setForeground(Color.WHITE); // Set text color
         southLabel.setHorizontalAlignment(JLabel.LEFT); // Align the text to the left
@@ -512,7 +646,7 @@ private void createPopup() {
         // Add the JLabel to the south panel
         southPanel.add(southLabel, BorderLayout.CENTER);
         
-     // Create a JLabel for the vertical text in the west panel
+        // Create a JLabel for the vertical text in the west panel
         JLabel westLabel = new JLabel("<html>1<br><br><br>2<br><br><br>3<br><br><br>4<br><br><br>5<br><br><br>6<br><br><br>7<br><br><br>8</html>");
         westLabel.setForeground(Color.WHITE); // Set text color
         westLabel.setHorizontalAlignment(JLabel.RIGHT); // Align the text to the right
@@ -521,18 +655,19 @@ private void createPopup() {
         // Add the JLabel to the west panel
         westPanel.add(westLabel, BorderLayout.WEST);
 
-
-
         mainPanel.add(northPanel, BorderLayout.NORTH);
         mainPanel.add(southPanel, BorderLayout.SOUTH);
         mainPanel.add(eastPanel, BorderLayout.EAST);
         mainPanel.add(westPanel, BorderLayout.WEST);
 
         frame.getContentPane().add(mainPanel);
-        frame.setSize(1300, 900); // Adjusted frame size
+        // Size the frame based on the preferred sizes of the board and side panels
+        frame.pack();
+
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         
+    
     }
 
 
@@ -588,7 +723,7 @@ private void createPopup() {
     
     @Override
     public void mousePressed(MouseEvent e) {
-    	
+
         
         row = getRowForButton(e.getSource());
         col = getColForButton(e.getSource()); 
@@ -706,20 +841,17 @@ private void createPopup() {
             	            	Winner();
             	        	}
         	            	 Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
          	                moveCount++;
          	                System.out.println(moveCount);
          	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	            	} 
-        	            
-        	            
-     
-        	             else {
+        	            else {
              	            Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
         	                moveCount++;
         	                System.out.println(moveCount);
         	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
         	            }
 
         	            
@@ -747,9 +879,8 @@ private void createPopup() {
         	        if (rookInstance.isValidMove(selectedRow, selectedCol, row, col, boardCells, moveHistory) && TakeTurns()) {
         	        	MovePiece(row,col);
 	        	        highlightCell(row, col);
-        	        	
-        	        	
-        	        	
+
+
 	        	        if (!CorrectCheckResponse()) {
         	            	System.out.println("Incorrect move after check");
         	            	moveCount--;
@@ -775,21 +906,18 @@ private void createPopup() {
             	            	System.out.print("Check Mate");
             	            	Winner();
             	        	}
-        	            	 Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
+        	            	Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
          	                moveCount++;
          	                System.out.println(moveCount);
          	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	            	} 
-        	            
-        	            
-     
-        	             else {
+                        else {
              	            Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
         	                moveCount++;
         	                System.out.println(moveCount);
         	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
         	            }
 
 
@@ -825,8 +953,8 @@ private void createPopup() {
         	                moveCount++;
     	                    System.out.println(moveCount);
     	                    moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	                    
-    	                
         	        	}
         	        	
         	        	else if(kingInstance.QueenSideCastle(selectedRow, selectedCol, row, col, boardCells, moveHistory)) {
@@ -836,6 +964,7 @@ private void createPopup() {
         	                moveCount++;
     	                    System.out.println(moveCount);
     	                    moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	                    
 
         	        	}
@@ -872,20 +1001,17 @@ private void createPopup() {
 	            	        	}
 	        	            	
 	        	            	Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
 	         	                moveCount++;
 	         	                System.out.println(moveCount);
 	         	                moveHistory.add(move);
-	    	            	} 
-	        	            
-	        	            
-	     
+                                switchClockAfterMove(selectedPiece.getColor());
+	    	            	}
 	        	            else {
 	            	            Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
 	        	                moveCount++;
 	        	                System.out.println(moveCount);
 	        	                moveHistory.add(move);
+                                switchClockAfterMove(selectedPiece.getColor());
 	        	            }
         	                selectedRow = -1;
         	                selectedCol = -1;
@@ -935,21 +1061,19 @@ private void createPopup() {
             	            	System.out.print("Check Mate");
             	            	Winner();
             	        	}
-        	            	 Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
 
+        	            	Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
          	                moveCount++;
          	                System.out.println(moveCount);
          	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	            	} 
-        	            
-        	            
-     
-        	             else {
+        	            else {
              	            Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
         	                moveCount++;
         	                System.out.println(moveCount);
         	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
         	            }
 
         	            selectedRow = -1;
@@ -1000,20 +1124,17 @@ private void createPopup() {
             	        	}
         	            	
         	            	Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
          	                moveCount++;
          	                System.out.println(moveCount);
          	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	            	} 
-        	            
-        	            
-     
-        	             else {
+        	            else {
              	            Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
-
         	                moveCount++;
         	                System.out.println(moveCount);
         	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
         	            }
 
         	            selectedRow = -1;
@@ -1069,16 +1190,15 @@ private void createPopup() {
          	                moveCount++;
          	                System.out.println(moveCount);
          	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
     	            	} 
-        	            
-        	            
-     
         	            else {
             	            Move move = new Move(selectedRow, selectedCol, row, col, selectedPiece, ifCheck);
 
         	                moveCount++;
         	                System.out.println(moveCount);
         	                moveHistory.add(move);
+                            switchClockAfterMove(selectedPiece.getColor());
         	            }
 
         	            selectedRow = -1;
@@ -1673,7 +1793,194 @@ private void createPopup() {
 
         }
     }
+
+    private void showClockpopup(){
+        //Time control options shown to the user
+        String[] options = {
+            "1 | 1",
+            "2 | 2",
+            "3 min",
+            "3 | 2",
+            "5 min",
+            "10 min",
+            "15 | 10",
+            "30 min"
+        };
+
+        //Show popup
+        int choice = JOptionPane.showOptionDialog(
+            null,
+            "Choose a time control:",
+            "Time Settings",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.PLAIN_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        //If user closes popup without choosing anything do nothing
+        if(choice==-1){
+            return;
+        }
+
+        //Set timer based on selection
+        switch(choice){
+            case 0: // 1|1
+                setTimeControl(60,1);
+                break;
+
+            case 1: // 2|1
+                setTimeControl(120,1);
+                break;
+
+            case 2: // 3 min
+                setTimeControl(180,0);
+                break;
+
+            case 3: // 3|2
+                setTimeControl(180,2);
+                break;
+
+            case 4: // 5 min
+                setTimeControl(300,0);
+                break;
+
+            case 5: // 10 min
+                setTimeControl(600,0);
+                break;
+
+            case 6: // 15|10
+                setTimeControl(900, 10);
+                break;
+
+            case 7: //30 min
+                setTimeControl(1800,0);
+                break;
+
+        }
+    }
+
+    private void setTimeControl(int startingSeconds, int incrementSeconds){
+        //Stop the old timer if it is already running
+        if (chessTimer!=null){
+            chessTimer.stop();
+        }
+
+        
+        //Set both players to the chosen starting time
+        whiteTimeLeft = startingSeconds;
+        blackTimeLeft = startingSeconds;
+
+        //Set increment
+        increment = incrementSeconds;
+
+        //Reset clock
+        activeClockColor = "white";
+        clockStarted = false;
+
+        //Update visual time labels
+        updateTimerLabels();
+    }
     
+    private void startChessTimer(){
+        //Do not create multiple timers
+        if (chessTimer != null && chessTimer.isRunning()){
+            return;
+        }
+
+        chessTimer = new javax.swing.Timer(1000, new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                
+                //Decrease the active player's time
+                if(activeClockColor.equals("white")){
+                    whiteTimeLeft--;
+
+                    //White loses if time reaches zero
+                    if(whiteTimeLeft <=0){
+                        whiteTimeLeft = 0;
+                        updateTimerLabels();
+                        chessTimer.stop();
+                        showTimeoutWinner("black");
+                        return;
+                    }
+                } else{
+                    blackTimeLeft--;
+
+                    //Black loses if time reaches zero
+                    if(blackTimeLeft<=0){
+                        blackTimeLeft = 0;
+                        updateTimerLabels();
+                        chessTimer.stop();
+                        showTimeoutWinner("white");
+                        return;
+                    }
+                }
+                //refresh the time labels
+                updateTimerLabels();
+            }
+        });
+
+        //Start ticking
+        chessTimer.start();
+    }
+
+    private void switchClockAfterMove(String playerWhoMoved){
+        //Start the clock only after which makes the first legal move
+        if(!clockStarted){
+            clockStarted = true;
+            activeClockColor = "black";
+            startChessTimer();
+            return;
+        }
+
+        //Add increment to the player who just moved
+        if(playerWhoMoved.equals("white")){
+            whiteTimeLeft+=increment;
+            activeClockColor = "black";
+        } else{
+            blackTimeLeft += increment;
+            activeClockColor = "white";
+        }
+
+        updateTimerLabels();
+    }
+
+    private void updateTimerLabels(){
+        if(whiteTimerLabel !=null){
+            whiteTimerLabel.setText("White: "+ formatTime(whiteTimeLeft));
+        }
+
+        if(blackTimerLabel!=null){
+            blackTimerLabel.setText("Black: "+formatTime(blackTimeLeft));
+        }
+    }
+
+    private String formatTime(int seconds){
+        int minutes = seconds/60;
+        int remainingSeconds = seconds%60;
+
+        return String.format("%d:%02d", minutes, remainingSeconds);
+    }
+
+    private void showTimeoutWinner(String winnerColor){
+        int option = JOptionPane.showOptionDialog(
+            null,
+            "Time is up!\n" +winnerColor + " wins!",
+            "Timeout",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.INFORMATION_MESSAGE,
+            null,
+            new Object[] {"Exit"},
+            "Exit"
+        );
+
+        if (option==JOptionPane.YES_OPTION){
+            System.exit(0);
+        }
+    }
+
     int getCount() {
     	return moveCount;
     }
